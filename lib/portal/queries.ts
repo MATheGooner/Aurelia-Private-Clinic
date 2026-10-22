@@ -1,14 +1,7 @@
-// @ts-nocheck
-/* __next_internal_action_entry_do_not_use__ {"e701fd9ff6bfb8f7c1b598372d42cc9c73fe8aa1":"logoutAction"} */ import { registerServerReference } from "private-next-rsc-server-reference";
-import { encryptActionBoundArgs, decryptActionBoundArgs } from "private-next-rsc-action-encryption";
-import { redirect } from "next/navigation";
-import { revokeCurrentSession } from "@/lib/auth/session";
-export async function logoutAction() {
-    await revokeCurrentSession();
-    redirect("/login");
-}
-import { ensureServerEntryExports } from "private-next-rsc-action-validate";
-ensureServerEntryExports([
-    logoutAction
-]);
-registerServerReference("e701fd9ff6bfb8f7c1b598372d42cc9c73fe8aa1", logoutAction);
+import{and,desc,eq,isNotNull}from'drizzle-orm';import type{AuthenticatedUser}from'@/lib/auth/types';import{requireOwnedPatient}from'./access';import{getDatabase}from'@/lib/db/client';import{appointments,auditLogs,clinicalNotes,departments,documents,patientProfiles,prescriptionItems,prescriptions,staffProfiles,practitioners,testResults,treatments}from'@/lib/db/schema';
+export async function portalAppointments(a:AuthenticatedUser){const id=requireOwnedPatient(a);return getDatabase().select({id:appointments.id,startsAt:appointments.startsAt,endsAt:appointments.endsAt,status:appointments.status,reason:appointments.reason,department:departments.name,treatment:treatments.name}).from(appointments).innerJoin(departments,eq(departments.id,appointments.departmentId)).leftJoin(treatments,eq(treatments.id,appointments.treatmentId)).where(eq(appointments.patientId,id)).orderBy(desc(appointments.startsAt))}
+export async function portalAppointment(a:AuthenticatedUser,id:string){const patientId=requireOwnedPatient(a);const[row]=await getDatabase().select({id:appointments.id,referenceNumber:appointments.referenceNumber,startsAt:appointments.startsAt,endsAt:appointments.endsAt,status:appointments.status,department:departments.name,treatment:treatments.name}).from(appointments).innerJoin(departments,eq(departments.id,appointments.departmentId)).leftJoin(treatments,eq(treatments.id,appointments.treatmentId)).where(and(eq(appointments.id,id),eq(appointments.patientId,patientId))).limit(1);return row}
+export async function portalProfile(a:AuthenticatedUser){const id=requireOwnedPatient(a);const[row]=await getDatabase().select().from(patientProfiles).where(eq(patientProfiles.id,id)).limit(1);return row}
+export async function portalDocuments(a:AuthenticatedUser){const id=requireOwnedPatient(a);return getDatabase().select().from(documents).where(and(eq(documents.patientId,id),eq(documents.patientVisible,true),eq(documents.status,'ACTIVE'))).orderBy(desc(documents.createdAt))}
+export async function portalRecords(a:AuthenticatedUser){const id=requireOwnedPatient(a),db=getDatabase();const[notes,results,rx]=await Promise.all([db.select().from(clinicalNotes).where(and(eq(clinicalNotes.patientId,id),eq(clinicalNotes.patientVisible,true),eq(clinicalNotes.status,'ACTIVE'))).orderBy(desc(clinicalNotes.createdAt)),db.select().from(testResults).where(and(eq(testResults.patientId,id),eq(testResults.patientVisible,true),isNotNull(testResults.releasedAt))).orderBy(desc(testResults.createdAt)),db.select({id:prescriptions.id,status:prescriptions.status,prescribedAt:prescriptions.prescribedAt,instructions:prescriptions.instructions,clinicianFirst:staffProfiles.firstName,clinicianLast:staffProfiles.lastName}).from(prescriptions).innerJoin(practitioners,eq(practitioners.id,prescriptions.prescribingPractitionerId)).innerJoin(staffProfiles,eq(staffProfiles.id,practitioners.staffProfileId)).where(and(eq(prescriptions.patientId,id),eq(prescriptions.patientVisible,true))).orderBy(desc(prescriptions.createdAt))]);const ids=rx.map(x=>x.id),items=ids.length?await db.select().from(prescriptionItems):[];return{notes,results,prescriptions:rx.map(x=>({...x,items:items.filter(i=>i.prescriptionId===x.id)}))}}
+export async function auditPortalView(a:AuthenticatedUser,action:string,resourceType:string){const id=requireOwnedPatient(a);await getDatabase().insert(auditLogs).values({actorUserId:a.userId,actorRoleSnapshot:a.role,action,resourceType,patientId:id,metadata:{selfService:true}})}

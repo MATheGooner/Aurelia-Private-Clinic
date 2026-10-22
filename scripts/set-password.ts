@@ -27,13 +27,13 @@ async function run() {
   try {
     await main();
   } catch (error) {
-    console.error('Password provisioning failed.', error instanceof Error  error.message : error);
+    console.error('Password provisioning failed.', error instanceof Error ? error.message : error);
     process.exitCode = 1;
   } finally {
     try {
       await closeDatabaseConnection();
     } catch (error) {
-      console.error('Password provisioning failed while closing the database connection.', error instanceof Error  error.message : error);
+      console.error('Password provisioning failed while closing the database connection.', error instanceof Error ? error.message : error);
       process.exitCode = 1;
     }
   }

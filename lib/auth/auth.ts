@@ -1,80 +1,67 @@
-// @ts-nocheck
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\layout.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx";
-import "next/dist/client/components/not-found-error";"TURBOPACK { transition: next-ssr }";
-import { AppPageRouteModule } from "next/dist/server/future/route-modules/app-page/module.compiled";
-import { RouteKind } from "next/dist/server/future/route-kind";
-// We inject the tree and pages here so that we can use them in the route
-// module.
-const tree = {
-        children: [
-        '',
-        {
-        children: [
-        'portal',
-        {
-        children: [
-        'appointments',
-        {
-        children: [
-        '[id]',
-        {
-        children: ['__PAGE__', {}, {
-          page: [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx"],
-          
-        }]
-      },
-        {
-        
-        
-      }
-      ]
-      },
-        {
-        
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\layout.tsx"],
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"],
-'not-found': [() => import(/* webpackMode: "eager" */ "next/dist/client/components/not-found-error"), "next/dist/client/components/not-found-error"],
-        
-      }
-      ]
-      }.children;
-const pages = ["C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx"];
-export { tree, pages };
-export { default as GlobalError } from "next/dist/client/components/error-boundary";
-const __next_app_require__ = __webpack_require__
-const __next_app_load_chunk__ = () => Promise.resolve()
-export const originalPathname = "/portal/appointments/[id]/page";
-export const __next_app__ = {
-    require: __next_app_require__,
-    loadChunk: __next_app_load_chunk__
-};
-export * from "next/dist/server/app-render/entry-base";
-// Create and export the route module that will be consumed.
-export const routeModule = new AppPageRouteModule({
-    definition: {
-        kind: RouteKind.APP_PAGE,
-        page: "/portal/appointments/[id]/page",
-        pathname: "/portal/appointments/[id]",
-        // The following aren't used in production.
-        bundlePath: "",
-        filename: "",
-        appPaths: []
-    },
-    userland: {
-        loaderTree: tree
-    }
-});
+import { and, eq, gt, isNull, sql } from 'drizzle-orm';
+import { getDatabase } from '@/lib/db/client';
+import { authCredentials, authSessions, patientProfiles, practitioners, staffProfiles, users } from '@/lib/db/schema';
+import { performDummyPasswordCheck, verifyPassword } from './password';
+import { createSessionToken, hashSessionToken } from './session-token';
 
-//# sourceMappingURL=app-page.js.map
+const maximumFailures = 5;
+const lockMinutes = 15;
+const sessionHours = 8;
+
+export class AuthenticationError extends Error {
+  constructor(message = 'The email address or password is incorrect.') { super(message); this.name = 'AuthenticationError'; }
+}
+
+export async function authenticate(email: string, password: string) {
+  const normalized = email.trim().toLowerCase();
+  const db = getDatabase();
+  const [record] = await db.select({
+    userId: users.id, email: users.email, role: users.role, status: users.status,
+    passwordHash: authCredentials.passwordHash, failedAttempts: authCredentials.failedAttempts,
+    lockedUntil: authCredentials.lockedUntil, patientId: patientProfiles.id,
+    staffProfileId: staffProfiles.id, practitionerId: practitioners.id,
+  }).from(users)
+    .innerJoin(authCredentials, eq(authCredentials.userId, users.id))
+    .leftJoin(patientProfiles, eq(patientProfiles.userId, users.id))
+    .leftJoin(staffProfiles, eq(staffProfiles.userId, users.id))
+    .leftJoin(practitioners, eq(practitioners.staffProfileId, staffProfiles.id))
+    .where(sql`lower(${users.email}) = ${normalized}`).limit(1);
+  if (!record) { await performDummyPasswordCheck(password); throw new AuthenticationError(); }
+  if (record.status !== 'ACTIVE') throw new AuthenticationError('This account is not active.');
+  if (record.lockedUntil && record.lockedUntil > new Date()) throw new AuthenticationError('This account is temporarily locked. Please try again later.');
+  if (!await verifyPassword(password, record.passwordHash)) {
+    const failures = record.failedAttempts + 1;
+    await db.update(authCredentials).set({
+      failedAttempts: failures,
+      lockedUntil: failures >= maximumFailures ? new Date(Date.now() + lockMinutes * 60_000) : null,
+      updatedAt: new Date(),
+    }).where(eq(authCredentials.userId, record.userId));
+    throw new AuthenticationError();
+  }
+  const token = createSessionToken();
+  const expiresAt = new Date(Date.now() + sessionHours * 60 * 60_000);
+  await db.transaction(async tx => {
+    await tx.update(authCredentials).set({ failedAttempts: 0, lockedUntil: null, updatedAt: new Date() }).where(eq(authCredentials.userId, record.userId));
+    await tx.update(users).set({ lastLoginAt: new Date(), updatedAt: new Date() }).where(eq(users.id, record.userId));
+    await tx.insert(authSessions).values({ userId: record.userId, tokenHash: hashSessionToken(token), expiresAt });
+  });
+  return { token, expiresAt, user: { userId: record.userId, email: record.email, role: record.role, patientId: record.patientId, staffProfileId: record.staffProfileId, practitionerId: record.practitionerId } };
+}
+
+export async function resolveSession(token: string) {
+  const [record] = await getDatabase().select({
+    sessionId: authSessions.id, userId: users.id, email: users.email, role: users.role,
+    status: users.status, patientId: patientProfiles.id, staffProfileId: staffProfiles.id, practitionerId: practitioners.id,
+  }).from(authSessions)
+    .innerJoin(users, eq(users.id, authSessions.userId))
+    .leftJoin(patientProfiles, eq(patientProfiles.userId, users.id))
+    .leftJoin(staffProfiles, eq(staffProfiles.userId, users.id))
+    .leftJoin(practitioners, eq(practitioners.staffProfileId, staffProfiles.id))
+    .where(and(eq(authSessions.tokenHash, hashSessionToken(token)), isNull(authSessions.revokedAt), gt(authSessions.expiresAt, new Date()))).limit(1);
+  if (!record || record.status !== 'ACTIVE') return null;
+  return { sessionId: record.sessionId, user: { userId: record.userId, email: record.email, role: record.role, patientId: record.patientId, staffProfileId: record.staffProfileId, practitionerId: record.practitionerId } };
+}
+
+export async function revokeSession(token: string) {
+  await getDatabase().update(authSessions).set({ revokedAt: new Date() }).where(eq(authSessions.tokenHash, hashSessionToken(token)));
+}

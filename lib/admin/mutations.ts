@@ -1,80 +1,42 @@
-// @ts-nocheck
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\layout.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx";
-import "next/dist/client/components/not-found-error";"TURBOPACK { transition: next-ssr }";
-import { AppPageRouteModule } from "next/dist/server/future/route-modules/app-page/module.compiled";
-import { RouteKind } from "next/dist/server/future/route-kind";
-// We inject the tree and pages here so that we can use them in the route
-// module.
-const tree = {
-        children: [
-        '',
-        {
-        children: [
-        'portal',
-        {
-        children: [
-        'appointments',
-        {
-        children: [
-        '[id]',
-        {
-        children: ['__PAGE__', {}, {
-          page: [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx"],
-          
-        }]
-      },
-        {
-        
-        
-      }
-      ]
-      },
-        {
-        
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\layout.tsx"],
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"],
-'not-found': [() => import(/* webpackMode: "eager" */ "next/dist/client/components/not-found-error"), "next/dist/client/components/not-found-error"],
-        
-      }
-      ]
-      }.children;
-const pages = ["C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx"];
-export { tree, pages };
-export { default as GlobalError } from "next/dist/client/components/error-boundary";
-const __next_app_require__ = __webpack_require__
-const __next_app_load_chunk__ = () => Promise.resolve()
-export const originalPathname = "/portal/appointments/[id]/page";
-export const __next_app__ = {
-    require: __next_app_require__,
-    loadChunk: __next_app_load_chunk__
-};
-export * from "next/dist/server/app-render/entry-base";
-// Create and export the route module that will be consumed.
-export const routeModule = new AppPageRouteModule({
-    definition: {
-        kind: RouteKind.APP_PAGE,
-        page: "/portal/appointments/[id]/page",
-        pathname: "/portal/appointments/[id]",
-        // The following aren't used in production.
-        bundlePath: "",
-        filename: "",
-        appPaths: []
-    },
-    userland: {
-        loaderTree: tree
-    }
-});
+import { and, eq } from 'drizzle-orm';
+import type { AuthenticatedUser } from '@/lib/auth/types';
+import { getDatabase } from '@/lib/db/client';
+import { appointments, appointmentStatusHistory, auditLogs, checkIns, patientProfiles } from '@/lib/db/schema';
+import { assertAdminWorkspace } from './access';
+import { canCheckIn, canTransitionAppointment, type OperationalAppointmentStatus } from './policies';
 
-//# sourceMappingURL=app-page.js.map
+export async function transitionAppointment(actor: AuthenticatedUser, id: string, next: OperationalAppointmentStatus, reason?: string) {
+  assertAdminWorkspace(actor);
+  return getDatabase().transaction(async tx => {
+    const [current] = await tx.select().from(appointments).where(eq(appointments.id, id)).limit(1);
+    if (!current || !canTransitionAppointment(current.status, next)) throw new Error('This appointment status transition is not permitted.');
+    await tx.update(appointments).set({ status: next, cancellationReason: next === 'CANCELLED' ? reason : current.cancellationReason, updatedAt: new Date() }).where(eq(appointments.id, id));
+    await tx.insert(appointmentStatusHistory).values({ appointmentId: id, previousStatus: current.status, newStatus: next, changedByUserId: actor.userId, reason });
+    await tx.insert(auditLogs).values({ actorUserId: actor.userId, actorRoleSnapshot: actor.role, action: 'APPOINTMENT_STATUS_CHANGED', resourceType: 'APPOINTMENT', resourceId: id, patientId: current.patientId, metadata: { from: current.status, to: next } });
+  });
+}
+
+export async function checkInAppointment(actor: AuthenticatedUser, id: string) {
+  assertAdminWorkspace(actor);
+  return getDatabase().transaction(async tx => {
+    const [appointment] = await tx.select().from(appointments).where(eq(appointments.id, id)).limit(1);
+    const [existing] = await tx.select().from(checkIns).where(and(eq(checkIns.appointmentId, id), eq(checkIns.reversedAt, null as never))).limit(1);
+    if (!appointment || !canCheckIn(actor.role, appointment.status, Boolean(existing))) throw new Error('This appointment cannot be checked in.');
+    await tx.insert(checkIns).values({ appointmentId: id, checkedInByUserId: actor.userId });
+    if (appointment.status !== 'ARRIVED') {
+      await tx.update(appointments).set({ status: 'ARRIVED', updatedAt: new Date() }).where(eq(appointments.id, id));
+      await tx.insert(appointmentStatusHistory).values({ appointmentId: id, previousStatus: appointment.status, newStatus: 'ARRIVED', changedByUserId: actor.userId });
+    }
+  });
+}
+
+export async function reverseCheckIn(actor: AuthenticatedUser, id: string, note?: string) {
+  assertAdminWorkspace(actor);
+  await getDatabase().update(checkIns).set({ reversedAt: new Date(), reversedByUserId: actor.userId, note }).where(and(eq(checkIns.appointmentId, id), eq(checkIns.reversedAt, null as never)));
+}
+
+export async function updateAdministrativePatient(actor: AuthenticatedUser, id: string, values: Partial<typeof patientProfiles.$inferInsert>) {
+  assertAdminWorkspace(actor);
+  const allowed = { firstName: values.firstName, lastName: values.lastName, email: values.email, phone: values.phone, addressLine1: values.addressLine1, addressLine2: values.addressLine2, city: values.city, postcode: values.postcode, country: values.country, emergencyContactName: values.emergencyContactName, emergencyContactPhone: values.emergencyContactPhone, status: values.status, updatedAt: new Date() };
+  await getDatabase().update(patientProfiles).set(allowed).where(eq(patientProfiles.id, id));
+}

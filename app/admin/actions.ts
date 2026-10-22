@@ -1,71 +1,19 @@
-// @ts-nocheck
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\audit\\page.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\layout.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx";
-import "next/dist/client/components/not-found-error";"TURBOPACK { transition: next-ssr }";
-import { AppPageRouteModule } from "next/dist/server/future/route-modules/app-page/module.compiled";
-import { RouteKind } from "next/dist/server/future/route-kind";
-// We inject the tree and pages here so that we can use them in the route
-// module.
-const tree = {
-        children: [
-        '',
-        {
-        children: [
-        'management',
-        {
-        children: [
-        'audit',
-        {
-        children: ['__PAGE__', {}, {
-          page: [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\audit\\page.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\audit\\page.tsx"],
-          
-        }]
-      },
-        {
-        
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\layout.tsx"],
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"],
-'not-found': [() => import(/* webpackMode: "eager" */ "next/dist/client/components/not-found-error"), "next/dist/client/components/not-found-error"],
-        
-      }
-      ]
-      }.children;
-const pages = ["C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\audit\\page.tsx"];
-export { tree, pages };
-export { default as GlobalError } from "next/dist/client/components/error-boundary";
-const __next_app_require__ = __webpack_require__
-const __next_app_load_chunk__ = () => Promise.resolve()
-export const originalPathname = "/management/audit/page";
-export const __next_app__ = {
-    require: __next_app_require__,
-    loadChunk: __next_app_load_chunk__
-};
-export * from "next/dist/server/app-render/entry-base";
-// Create and export the route module that will be consumed.
-export const routeModule = new AppPageRouteModule({
-    definition: {
-        kind: RouteKind.APP_PAGE,
-        page: "/management/audit/page",
-        pathname: "/management/audit",
-        // The following aren't used in production.
-        bundlePath: "",
-        filename: "",
-        appPaths: []
-    },
-    userland: {
-        loaderTree: tree
-    }
-});
+'use server';
+import { revalidatePath } from 'next/cache';
+import { requireAdminWorkspace } from '@/lib/auth/guards';
+import { checkInAppointment, reverseCheckIn, transitionAppointment, updateAdministrativePatient } from '@/lib/admin/mutations';
+import type { OperationalAppointmentStatus } from '@/lib/admin/policies';
 
-//# sourceMappingURL=app-page.js.map
+export async function appointmentStatusAction(formData: FormData) {
+  const actor = await requireAdminWorkspace(); const id = String(formData.get('appointmentId'));
+  await transitionAppointment(actor, id, String(formData.get('status')) as OperationalAppointmentStatus, String(formData.get('reason') ?? '') || undefined);
+  revalidatePath(`/admin/appointments/${id}`);
+}
+export async function checkInAction(formData: FormData) { const actor = await requireAdminWorkspace(); const id = String(formData.get('appointmentId')); await checkInAppointment(actor, id); revalidatePath(`/admin/appointments/${id}`); }
+export async function reverseCheckInAction(formData: FormData) { const actor = await requireAdminWorkspace(); const id = String(formData.get('appointmentId')); await reverseCheckIn(actor, id, String(formData.get('note') ?? '')); revalidatePath(`/admin/appointments/${id}`); }
+export async function updatePatientAction(formData: FormData) {
+  const actor = await requireAdminWorkspace(); const id = String(formData.get('patientId'));
+  const value = (name: string) => String(formData.get(name) ?? '').trim() || null;
+  await updateAdministrativePatient(actor, id, { firstName: value('firstName') ?? undefined, lastName: value('lastName') ?? undefined, email: value('email'), phone: value('phone'), addressLine1: value('addressLine1'), addressLine2: value('addressLine2'), city: value('city'), postcode: value('postcode'), country: value('country'), emergencyContactName: value('emergencyContactName'), emergencyContactPhone: value('emergencyContactPhone') });
+  revalidatePath(`/admin/patients/${id}`);
+}

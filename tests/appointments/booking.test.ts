@@ -13,18 +13,18 @@ test('successful booking passes a validated concrete slot to persistence', async
   let received: PersistBookingInput | undefined;
   const result = await bookAppointment(payload, null, { availability, persist: async (input) => { received = input; return persisted; }, reference: () => 'AUR-TEST', patientNumber: () => 'AUR-PATIENT' });
   assert.equal(result.reference, 'AUR-TEST');
-  assert.equal(received.practitionerId, slot.practitionerId);
-  assert.equal(received.publicPatient.patientNumber, 'AUR-PATIENT');
-  assert.equal(received.creatorUserId, null);
+  assert.equal(received!.practitionerId, slot.practitionerId);
+  assert.equal(received!.publicPatient!.patientNumber, 'AUR-PATIENT');
+  assert.equal(received!.creatorUserId, null);
 });
 
 test('authenticated PATIENT ownership is derived from the session, never request data', async () => {
   const actor: AuthenticatedUser = { userId: 'user-a', email: 'patient@example.test', role: 'PATIENT', patientId: 'patient-owned', staffProfileId: null, practitionerId: null };
   let received: PersistBookingInput | undefined;
   await bookAppointment({ ...payload, patientId: 'patient-other' }, actor, { availability, persist: async (input) => { received = input; return persisted; }, reference: () => 'AUR-TEST' });
-  assert.equal(received.patientId, 'patient-owned');
-  assert.equal(received.publicPatient, undefined);
-  assert.equal(received.patientType, 'EXISTING');
+  assert.equal(received!.patientId, 'patient-owned');
+  assert.equal(received!.publicPatient, undefined);
+  assert.equal(received!.patientType, 'EXISTING');
 });
 
 test('a PATIENT without a linked profile fails safely', async () => {

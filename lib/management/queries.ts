@@ -1,71 +1,7 @@
-// @ts-nocheck
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\audit\\page.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\layout.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx";
-import "next/dist/client/components/not-found-error";"TURBOPACK { transition: next-ssr }";
-import { AppPageRouteModule } from "next/dist/server/future/route-modules/app-page/module.compiled";
-import { RouteKind } from "next/dist/server/future/route-kind";
-// We inject the tree and pages here so that we can use them in the route
-// module.
-const tree = {
-        children: [
-        '',
-        {
-        children: [
-        'management',
-        {
-        children: [
-        'audit',
-        {
-        children: ['__PAGE__', {}, {
-          page: [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\audit\\page.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\audit\\page.tsx"],
-          
-        }]
-      },
-        {
-        
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\layout.tsx"],
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"],
-'not-found': [() => import(/* webpackMode: "eager" */ "next/dist/client/components/not-found-error"), "next/dist/client/components/not-found-error"],
-        
-      }
-      ]
-      }.children;
-const pages = ["C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\management\\audit\\page.tsx"];
-export { tree, pages };
-export { default as GlobalError } from "next/dist/client/components/error-boundary";
-const __next_app_require__ = __webpack_require__
-const __next_app_load_chunk__ = () => Promise.resolve()
-export const originalPathname = "/management/audit/page";
-export const __next_app__ = {
-    require: __next_app_require__,
-    loadChunk: __next_app_load_chunk__
-};
-export * from "next/dist/server/app-render/entry-base";
-// Create and export the route module that will be consumed.
-export const routeModule = new AppPageRouteModule({
-    definition: {
-        kind: RouteKind.APP_PAGE,
-        page: "/management/audit/page",
-        pathname: "/management/audit",
-        // The following aren't used in production.
-        bundlePath: "",
-        filename: "",
-        appPaths: []
-    },
-    userland: {
-        loaderTree: tree
-    }
-});
-
-//# sourceMappingURL=app-page.js.map
+import{and,desc,eq,ilike,or,sql}from'drizzle-orm';import type{AuthenticatedUser,UserRole}from'@/lib/auth/types';import{assertManagement}from'./access';import{getDatabase}from'@/lib/db/client';import{appointments,auditLogs,clinicalEncounters,patientProfiles,practitioners,staffProfiles,users}from'@/lib/db/schema';
+export async function managementDashboard(a:AuthenticatedUser){assertManagement(a);const db=getDatabase();const count=async(table:Parameters<typeof db.select>[0]extends never?never:any)=>0;const[p,s,ap,e]=await Promise.all([db.select({n:sql<number>`count(*)`}).from(patientProfiles),db.select({n:sql<number>`count(*)`}).from(staffProfiles),db.select({n:sql<number>`count(*)`}).from(appointments),db.select({n:sql<number>`count(*)`}).from(clinicalEncounters)]);return{patients:Number(p[0].n),staff:Number(s[0].n),appointments:Number(ap[0].n),encounters:Number(e[0].n)}}
+export async function auditRows(a:AuthenticatedUser,f:Record<string,string>={}){assertManagement(a);return getDatabase().select({id:auditLogs.id,occurredAt:auditLogs.occurredAt,role:auditLogs.actorRoleSnapshot,action:auditLogs.action,resourceType:auditLogs.resourceType,resourceId:auditLogs.resourceId,patientId:auditLogs.patientId,metadata:auditLogs.metadata}).from(auditLogs).where(and(f.action?ilike(auditLogs.action,`%${f.action}%`):undefined,f.resourceType?ilike(auditLogs.resourceType,`%${f.resourceType}%`):undefined,f.role?eq(auditLogs.actorRoleSnapshot,f.role as UserRole):undefined)).orderBy(desc(auditLogs.occurredAt)).limit(250)}
+export async function staffRows(a:AuthenticatedUser){assertManagement(a);return getDatabase().select({userId:users.id,email:users.email,role:users.role,status:users.status,staffId:staffProfiles.id,firstName:staffProfiles.firstName,lastName:staffProfiles.lastName,active:staffProfiles.active}).from(users).innerJoin(staffProfiles,eq(staffProfiles.userId,users.id)).orderBy(staffProfiles.lastName)}
+export async function practitionerRows(a:AuthenticatedUser){assertManagement(a);return getDatabase().select({id:practitioners.id,slug:practitioners.publicSlug,active:practitioners.active,firstName:staffProfiles.firstName,lastName:staffProfiles.lastName}).from(practitioners).innerJoin(staffProfiles,eq(staffProfiles.id,practitioners.staffProfileId)).orderBy(staffProfiles.lastName)}
+export async function managementPatients(a:AuthenticatedUser,q=''){assertManagement(a);return getDatabase().select().from(patientProfiles).where(q?or(ilike(patientProfiles.firstName,`%${q}%`),ilike(patientProfiles.lastName,`%${q}%`),ilike(patientProfiles.patientNumber,`%${q}%`)):undefined).orderBy(desc(patientProfiles.updatedAt)).limit(100)}
+export async function managementPatient(a:AuthenticatedUser,id:string){assertManagement(a);const[p]=await getDatabase().select().from(patientProfiles).where(eq(patientProfiles.id,id)).limit(1);return p}

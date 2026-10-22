@@ -1,80 +1,55 @@
-// @ts-nocheck
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\layout.tsx";
-import "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx";
-import "next/dist/client/components/not-found-error";"TURBOPACK { transition: next-ssr }";
-import { AppPageRouteModule } from "next/dist/server/future/route-modules/app-page/module.compiled";
-import { RouteKind } from "next/dist/server/future/route-kind";
-// We inject the tree and pages here so that we can use them in the route
-// module.
-const tree = {
-        children: [
-        '',
-        {
-        children: [
-        'portal',
-        {
-        children: [
-        'appointments',
-        {
-        children: [
-        '[id]',
-        {
-        children: ['__PAGE__', {}, {
-          page: [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx"],
-          
-        }]
-      },
-        {
-        
-        
-      }
-      ]
-      },
-        {
-        
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\layout.tsx"],
-        
-      }
-      ]
-      },
-        {
-        'layout': [() => import(/* webpackMode: "eager" */ "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"), "C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\layout.tsx"],
-'not-found': [() => import(/* webpackMode: "eager" */ "next/dist/client/components/not-found-error"), "next/dist/client/components/not-found-error"],
-        
-      }
-      ]
-      }.children;
-const pages = ["C:\\Users\\MSI PRESTIGE 15\\Documents\\VS Code\\Software Development\\Aurelia Private Clinic\\app\\portal\\appointments\\[id]\\page.tsx"];
-export { tree, pages };
-export { default as GlobalError } from "next/dist/client/components/error-boundary";
-const __next_app_require__ = __webpack_require__
-const __next_app_load_chunk__ = () => Promise.resolve()
-export const originalPathname = "/portal/appointments/[id]/page";
-export const __next_app__ = {
-    require: __next_app_require__,
-    loadChunk: __next_app_load_chunk__
-};
-export * from "next/dist/server/app-render/entry-base";
-// Create and export the route module that will be consumed.
-export const routeModule = new AppPageRouteModule({
-    definition: {
-        kind: RouteKind.APP_PAGE,
-        page: "/portal/appointments/[id]/page",
-        pathname: "/portal/appointments/[id]",
-        // The following aren't used in production.
-        bundlePath: "",
-        filename: "",
-        appPaths: []
-    },
-    userland: {
-        loaderTree: tree
-    }
-});
+import { and, asc, desc, eq, gte, inArray } from 'drizzle-orm';
+import type { AuthenticatedUser } from '@/lib/auth/types';
+import { assertClinicalAuthor } from './access';
+import { getDatabase } from '@/lib/db/client';
+import { appointments, clinicalEncounters, clinicalNotes, departments, patientAlerts, patientProfiles, prescriptions, prescriptionItems, testResults, treatments } from '@/lib/db/schema';
 
-//# sourceMappingURL=app-page.js.map
+export async function clinicianAppointments(actor: AuthenticatedUser) {
+  assertClinicalAuthor(actor);
+  return getDatabase().select({
+    id: appointments.id, patientId: appointments.patientId, startsAt: appointments.startsAt, status: appointments.status,
+    reason: appointments.reason, firstName: patientProfiles.firstName, lastName: patientProfiles.lastName,
+    department: departments.name, treatment: treatments.name,
+  }).from(appointments).innerJoin(patientProfiles, eq(patientProfiles.id, appointments.patientId))
+    .innerJoin(departments, eq(departments.id, appointments.departmentId))
+    .leftJoin(treatments, eq(treatments.id, appointments.treatmentId))
+    .where(and(eq(appointments.practitionerId, actor.practitionerId), gte(appointments.startsAt, new Date(Date.now() - 86_400_000))))
+    .orderBy(asc(appointments.startsAt));
+}
+
+export async function clinicianPatients(actor: AuthenticatedUser) {
+  assertClinicalAuthor(actor);
+  const rows = await getDatabase().select({ id: patientProfiles.id, patientNumber: patientProfiles.patientNumber, firstName: patientProfiles.firstName, lastName: patientProfiles.lastName, dateOfBirth: patientProfiles.dateOfBirth })
+    .from(appointments).innerJoin(patientProfiles, eq(patientProfiles.id, appointments.patientId))
+    .where(eq(appointments.practitionerId, actor.practitionerId)).orderBy(asc(patientProfiles.lastName));
+  return Array.from(new Map(rows.map(row => [row.id, row])).values());
+}
+
+export async function clinicalPatient(actor: AuthenticatedUser, patientId: string) {
+  assertClinicalAuthor(actor);
+  const db = getDatabase();
+  const [patient] = await db.select().from(patientProfiles).where(eq(patientProfiles.id, patientId)).limit(1);
+  if (!patient) return null;
+  const [encounters, notes, alerts, results, prescriptionRows] = await Promise.all([
+    db.select().from(clinicalEncounters).where(eq(clinicalEncounters.patientId, patientId)).orderBy(desc(clinicalEncounters.createdAt)),
+    db.select().from(clinicalNotes).where(eq(clinicalNotes.patientId, patientId)).orderBy(desc(clinicalNotes.createdAt)),
+    db.select().from(patientAlerts).where(eq(patientAlerts.patientId, patientId)).orderBy(desc(patientAlerts.createdAt)),
+    db.select().from(testResults).where(eq(testResults.patientId, patientId)).orderBy(desc(testResults.createdAt)),
+    db.select().from(prescriptions).where(eq(prescriptions.patientId, patientId)).orderBy(desc(prescriptions.createdAt)),
+  ]);
+  return { patient, encounters, notes, alerts, results, prescriptions: prescriptionRows };
+}
+
+export async function clinicalEncounter(actor: AuthenticatedUser, encounterId: string) {
+  assertClinicalAuthor(actor);
+  const db = getDatabase();
+  const [encounter] = await db.select().from(clinicalEncounters).where(eq(clinicalEncounters.id, encounterId)).limit(1);
+  if (!encounter) return null;
+  const [notes, prescriptionsRows] = await Promise.all([
+    db.select().from(clinicalNotes).where(eq(clinicalNotes.encounterId, encounterId)).orderBy(asc(clinicalNotes.createdAt)),
+    db.select().from(prescriptions).where(eq(prescriptions.encounterId, encounterId)).orderBy(desc(prescriptions.createdAt)),
+  ]);
+  const ids = prescriptionsRows.map(row => row.id);
+  const items = ids.length ? await db.select().from(prescriptionItems).where(inArray(prescriptionItems.prescriptionId, ids)) : [];
+  return { encounter, notes, prescriptions: prescriptionsRows.map(row => ({ ...row, items: items.filter(item => item.prescriptionId === row.id) })) };
+}

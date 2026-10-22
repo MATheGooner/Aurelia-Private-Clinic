@@ -1,177 +1,86 @@
-// @ts-nocheck
-/* __next_internal_client_entry_do_not_use__ default auto */ import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { EditorialImage } from "@/components/editorial-image";
-import Link from "next/link";
-import { useState } from "react";
-import { Button } from "@/components/button";
-import { Container } from "@/components/container";
-import { Section } from "@/components/section";
-import { SectionHeading } from "@/components/section-heading";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
-import { careConcerns, dentistryCategories, departments, fees, practitioners, testimonials } from "@/lib/site-data";
-const facilityImage = "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1400&q=85";
-export default function HomePage() {
-    const [selected, setSelected] = useState(careConcerns[0]);
-    return /*#__PURE__*/ _jsxs(_Fragment, {
-        children: [
-            /*#__PURE__*/ _jsx(SiteHeader, {}),
-            /*#__PURE__*/ _jsxs("main", {
-                children: [
-                    /*#__PURE__*/ _jsxs("section", {
-                        className: "relative overflow-hidden",
-                        children: [
-                            /*#__PURE__*/ _jsx("div", {
-                                className: "absolute inset-0",
-                                children: /*#__PURE__*/ _jsx(EditorialImage, {
-                                    src: "https://images.unsplash.com/photo-1516841273335-e39b37888115?auto=format&fit=crop&w=2200&q=85",
-                                    alt: "Sunlit, calm clinic interior",
-                                    fill: true,
-                                    priority: true,
-                                    className: "object-cover",
-                                    sizes: "100vw"
-                                })
-                            }),
-                            /*#__PURE__*/ _jsx("div", {
-                                className: "absolute inset-0 bg-[#1d2925]/45"
-                            }),
-                            /*#__PURE__*/ _jsx(Container, {
-                                className: "relative flex min-h-[38rem] items-end py-20 sm:min-h-[44rem] lg:py-28",
-                                children: /*#__PURE__*/ _jsxs("div", {
-                                    className: "max-w-3xl text-white",
-                                    children: [
-                                        /*#__PURE__*/ _jsx("p", {
-                                            className: "eyebrow text-white/80",
-                                            children: "Aurelia Private Clinic \xc2\xb7 Manchester"
-                                        }),
-                                        /*#__PURE__*/ _jsx("h1", {
-                                            className: "mt-5 font-display text-5xl leading-[1.05] sm:text-7xl",
-                                            children: "Private healthcare centred around you"
-                                        }),
-                                        /*#__PURE__*/ _jsx("p", {
-                                            className: "mt-6 max-w-xl text-lg leading-8 text-white/85",
-                                            children: "Medical, dental and specialist care with experienced clinicians and convenient private appointments."
-                                        }),
-                                        /*#__PURE__*/ _jsxs("div", {
-                                            className: "mt-8 flex flex-wrap gap-3",
-                                            children: [
-                                                /*#__PURE__*/ _jsx(Button, {
-                                                    href: "/book",
-                                                    children: "Book an Appointment"
-                                                }),
-                                                /*#__PURE__*/ _jsx(Button, {
-                                                    href: "#services",
-                                                    variant: "secondary",
-                                                    className: "border-white/70 text-white hover:border-white hover:text-white",
-                                                    children: "Explore Services"
-                                                })
-                                            ]
-                                        })
-                                    ]
-                                })
-                            })
-                        ]
-                    }),
-                    /*#__PURE__*/ _jsx("section", {
-                        className: "border-b border-border bg-surface",
-                        children: /*#__PURE__*/ _jsxs(Container, {
-                            className: "grid gap-4 py-7 text-sm text-muted sm:grid-cols-2 lg:grid-cols-4",
-                            children: [
-                                /*#__PURE__*/ _jsx(Trust, {
-                                    text: "Experienced clinicians"
-                                }),
-                                /*#__PURE__*/ _jsx(Trust, {
-                                    text: "Same-week appointments"
-                                }),
-                                /*#__PURE__*/ _jsx(Trust, {
-                                    text: "Transparent pricing"
-                                }),
-                                /*#__PURE__*/ _jsx(Trust, {
-                                    text: "Central Manchester"
-                                })
-                            ]
-                        })
-                    }),
-                    /*#__PURE__*/ _jsx(Section, {
-                        className: "bg-surface",
-                        children: /*#__PURE__*/ _jsxs(Container, {
-                            children: [
-                                /*#__PURE__*/ _jsx(SectionHeading, {
-                                    eyebrow: "A clearer starting point",
-                                    title: "What can we help you with?",
-                                    intro: "Choose the option that feels closest to what you need. We\xe2€™ll point you towards the right part of Aurelia."
-                                }),
-                                /*#__PURE__*/ _jsx("div", {
-                                    className: "mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4",
-                                    children: careConcerns.map((concern)=>/*#__PURE__*/ _jsx("button", {
-                                            onClick: ()=>setSelected(concern),
-                                            className: `care-option ${selected.label === concern.label ? "care-option-active" : ""}`,
-                                            children: concern.label
-                                        }, concern.label))
-                                }),
-                                /*#__PURE__*/ _jsxs("div", {
-                                    className: "mt-8 flex flex-col justify-between gap-6 border border-border bg-canvas p-6 sm:flex-row sm:items-center sm:p-8",
-                                    children: [
-                                        /*#__PURE__*/ _jsxs("div", {
-                                            children: [
-                                                /*#__PURE__*/ _jsx("p", {
-                                                    className: "text-xs font-semibold uppercase tracking-[0.16em] text-accent",
-                                                    children: "We recommend"
-                                                }),
-                                                /*#__PURE__*/ _jsx("h3", {
-                                                    className: "mt-2 font-display text-3xl",
-                                                    children: selected.recommendation
-                                                }),
-                                                /*#__PURE__*/ _jsx("p", {
-                                                    className: "mt-2 text-muted",
-                                                    children: selected.department
-                                                })
-                                            ]
-                                        }),
-                                        /*#__PURE__*/ _jsxs("div", {
-                                            className: "flex flex-wrap gap-3",
-                                            children: [
-                                                /*#__PURE__*/ _jsxs(Button, {
-                                                    href: selected.href,
-                                                    children: [
-                                                        "View ",
-                                                        selected.department
-                                                    ]
-                                                }),
-                                                /*#__PURE__*/ _jsx(Button, {
-                                                    href: "/book",
-                                                    variant: "secondary",
-                                                    children: "Book Appointment"
-                                                })
-                                            ]
-                                        })
-                                    ]
-                                })
-                            ]
-                        })
-                    }),
-                    /*#__PURE__*/ _jsx(Section, {
-                        id: "services",
-                        children: /*#__PURE__*/ _jsxs(Container, {
-                            children: [
-                                /*#__PURE__*/ _jsx(SectionHeading, {
-                                    eyebrow: "Care, considered",
-                                    title: "Our departments",
-                                    intro: "A connected approach to private care, with time to understand your needs properly."
-                                }),
-                                /*#__PURE__*/ _jsx("div", {
-                                    className: "mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3",
-                                    children: departments.map((department, index)=>/*#__PURE__*/ _jsx("article", {
-                                            className: `group ${index === 0 ? "md:col-span-2 lg:col-span-2" : ""}`,
-                                            children: /*#__PURE__*/ _jsx(Link, {
-                                                href: `/services/${department.slug}`,
-                                                children: /*#__PURE__*/ _jsxs("div", {
-                                                    className: `relative overflow-hidden ${index === 0 ? "aspect-[16/8]" : "aspect-[4/3]"}`,
-                                                    children: [
-                                                        /*#__PURE__*/ _jsx(EditorialImage, {
-                                                            src: department.image,
-                                                            alt: "",
-                                                            fill: true,
-                                                            className: "object-cover transition duration-500 group-hover:scale-105",
-                                                            sizes: "(min-width: 1024px) 50vw, 100vw"
-                   
+import type { Practitioner } from './practitioner-data';
+
+export type Treatment = {
+  slug: string; name: string; departmentSlug: string; department: string; category: string;
+  shortDescription: string; introduction: string; heroImage: string; concerns: string[];
+  suitability: string[]; process: { title: string; description: string }[]; price: string;
+  durationNote: string; bookingTitle: string; bookingLabel: string; urgentGuidance?: string;
+  faq: { question: string; answer: string }[]; relatedSlugs: string[];
+};
+
+const images: Record<string, string> = {
+  'general-practice': 'https://images.unsplash.com/photo-1516841273335-e39b37888115?auto=format&fit=crop&w=1600&q=85',
+  dentistry: 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&w=1600&q=85',
+  dermatology: 'https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=1600&q=85',
+  physiotherapy: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1600&q=85',
+  'womens-health': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1600&q=85',
+  'health-screening': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=85',
+};
+const departments: Record<string, string> = {
+  'general-practice': 'General Practice', dentistry: 'Dentistry', dermatology: 'Dermatology',
+  physiotherapy: 'Physiotherapy', 'womens-health': "Women's Health", 'health-screening': 'Health Screening & Diagnostics',
+};
+const definitions: Array<[string, string, string, string, string]> = [
+  ['private-gp-consultation','Private GP Consultation','general-practice','General Practice','from £95'],
+  ['health-review','Health Review','general-practice','Preventive care','from £145'],
+  ['general-health-concern','General Health Concern','general-practice','General Practice','from £95'],
+  ['gp-follow-up','GP Follow-up','general-practice','General Practice','from £75'],
+  ['routine-health-check','Routine Health Check','health-screening','Health screening','from £195'],
+  ['preventive-health-assessment','Preventive Health Assessment','health-screening','Health screening','from £295'],
+  ['private-health-check','Private Health Check','health-screening','Health screening','from £295'],
+  ['results-review','Results Review','health-screening','Diagnostics','from £75'],
+  ['screening-support','Screening Support','health-screening','Diagnostics','from £95'],
+  ['dental-examination','Dental Examination','dentistry','Preventive dentistry','from £65'],
+  ['emergency-dental-appointment','Emergency Dental Appointment','dentistry','Emergency dentistry','from £95'],
+  ['dental-hygiene','Dental Hygiene','dentistry','Preventive dentistry','from £75'],
+  ['fillings','Dental Fillings','dentistry','Restorative dentistry','from £145'],
+  ['crowns','Dental Crowns','dentistry','Restorative dentistry','from £695'],
+  ['root-canal-treatment','Root Canal Treatment','dentistry','Restorative dentistry','from £650'],
+  ['dental-implants','Dental Implants','dentistry','Implant dentistry','consultation from £120'],
+  ['clear-aligner-consultation','Clear Aligner Consultation','dentistry','Cosmetic dentistry','from £95'],
+  ['teeth-whitening','Teeth Whitening','dentistry','Cosmetic dentistry','from £350'],
+  ['veneers','Dental Veneers','dentistry','Cosmetic dentistry','from £750'],
+  ['dermatology-consultation','Dermatology Consultation','dermatology','General dermatology','from £180'],
+  ['acne-consultation','Acne Consultation','dermatology','Medical dermatology','from £180'],
+  ['eczema-consultation','Eczema Consultation','dermatology','Medical dermatology','from £180'],
+  ['mole-consultation','Mole Consultation','dermatology','Skin assessment','from £180'],
+  ['hair-scalp-consultation','Hair & Scalp Consultation','dermatology','Hair and scalp','from £180'],
+  ['physiotherapy-assessment','Physiotherapy Assessment','physiotherapy','Assessment','from £85'],
+  ['back-pain-assessment','Back Pain Assessment','physiotherapy','Musculoskeletal care','from £85'],
+  ['sports-injury-consultation','Sports Injury Consultation','physiotherapy','Sports rehabilitation','from £85'],
+  ['joint-pain-assessment','Joint Pain Assessment','physiotherapy','Musculoskeletal care','from £85'],
+  ['rehabilitation-session','Rehabilitation Session','physiotherapy','Rehabilitation','from £75'],
+  ['womens-health-consultation',"Women's Health Consultation",'womens-health',"Women's health",'from £130'],
+  ['menstrual-health-consultation','Menstrual Health Consultation','womens-health',"Women's health",'from £130'],
+  ['menopause-consultation','Menopause Consultation','womens-health','Menopause care','from £150'],
+  ['reproductive-health-consultation','Reproductive Health Consultation','womens-health','Reproductive health','from £130'],
+];
+
+export const treatments: Treatment[] = definitions.map(([slug, name, departmentSlug, category, price], index, all) => ({
+  slug, name, departmentSlug, department: departments[departmentSlug], category, price,
+  shortDescription: `Private ${name.toLowerCase()} with careful assessment and clear next steps.`,
+  introduction: `Your appointment begins with time to understand your concerns, priorities and relevant health history before appropriate options are discussed.`,
+  heroImage: images[departmentSlug],
+  concerns: ['A new or changing concern', 'Symptoms affecting day-to-day life', 'A need for considered specialist advice'],
+  suitability: ['Patients seeking a private clinical assessment', 'People who value clear explanations and a proportionate plan'],
+  process: [
+    { title: 'Conversation', description: 'We listen to your concerns and relevant history.' },
+    { title: 'Assessment', description: 'Your clinician carries out an appropriate examination or review.' },
+    { title: 'Plan', description: 'Findings and suitable next steps are explained clearly.' },
+    { title: 'Follow-up', description: 'Further care is arranged where it is clinically useful.' },
+  ],
+  durationNote: 'Appointment length depends on the assessment and treatment required.',
+  bookingTitle: `Book a ${name.toLowerCase()}`, bookingLabel: `Book ${name}`,
+  urgentGuidance: slug === 'emergency-dental-appointment' ? 'Severe swelling, breathing difficulty or uncontrolled bleeding requires urgent emergency care.' : undefined,
+  faq: [
+    { question: 'What should I bring?', answer: 'Bring relevant medication details, previous results and any questions you would like to discuss.' },
+    { question: 'Will treatment happen immediately?', answer: 'Your clinician will assess suitability and explain timing before treatment is agreed.' },
+  ],
+  relatedSlugs: all.filter(item => item[2] === departmentSlug && item[0] !== slug).slice(0, 3).map(item => item[0]),
+}));
+
+export const treatmentBySlug = Object.fromEntries(treatments.map(item => [item.slug, item])) as Record<string, Treatment>;
+export const treatmentsByDepartment = Object.fromEntries(Object.keys(departments).map(slug => [slug, treatments.filter(item => item.departmentSlug === slug)])) as Record<string, Treatment[]>;
+export function treatmentPractitioners(treatment: Treatment, practitioners: Practitioner[]) {
+  return practitioners.filter(practitioner => practitioner.treatmentSlugs.includes(treatment.slug));
+}

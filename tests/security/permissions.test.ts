@@ -8,9 +8,9 @@ import { createClinicalEncounter, listPatientEncounters } from '../../lib/db/rep
 
 const actor = (role: UserRole, overrides: Partial<AuthenticatedUser> = {}): AuthenticatedUser => ({
   userId: `${role.toLowerCase()}-user`, email: `${role.toLowerCase()}@example.test`, role,
-  patientId: role === 'PATIENT'  'patient-a' : null,
-  staffProfileId: role === 'PATIENT'  null : `${role.toLowerCase()}-staff`,
-  practitionerId: role === 'CLINICIAN'  'clinician-practitioner' : null,
+  patientId: role === 'PATIENT' ? 'patient-a' : null,
+  staffProfileId: role === 'PATIENT' ? null : `${role.toLowerCase()}-staff`,
+  practitionerId: role === 'CLINICIAN' ? 'clinician-practitioner' : null,
   ...overrides,
 });
 

@@ -1,133 +1,23 @@
-// @ts-nocheck
-import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import Link from "next/link";
-import { Button } from "@/components/button";
-import { Container } from "@/components/container";
-import { Section } from "@/components/section";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
-import { departmentPages } from "@/lib/department-data";
-import { treatmentsByDepartment } from "@/lib/treatment-data";
-export const metadata = {
-    title: "Fees",
-    description: "View illustrative portfolio-demo pricing for private appointments and treatments at Aurelia Private Clinic."
-};
-export default function FeesPage() {
-    return /*#__PURE__*/ _jsxs(_Fragment, {
-        children: [
-            /*#__PURE__*/ _jsx(SiteHeader, {}),
-            /*#__PURE__*/ _jsxs("main", {
-                children: [
-                    /*#__PURE__*/ _jsx("section", {
-                        className: "border-b border-border bg-surface",
-                        children: /*#__PURE__*/ _jsxs(Container, {
-                            className: "grid gap-10 py-20 sm:py-28 lg:grid-cols-[.8fr_1.2fr] lg:items-end",
-                            children: [
-                                /*#__PURE__*/ _jsxs("div", {
-                                    children: [
-                                        /*#__PURE__*/ _jsx("p", {
-                                            className: "eyebrow",
-                                            children: "Illustrative portfolio-demo pricing"
-                                        }),
-                                        /*#__PURE__*/ _jsx("h1", {
-                                            className: "mt-5 font-display text-5xl leading-tight sm:text-7xl",
-                                            children: "Clear fees, before care begins."
-                                        })
-                                    ]
-                                }),
-                                /*#__PURE__*/ _jsxs("div", {
-                                    children: [
-                                        /*#__PURE__*/ _jsx("p", {
-                                            className: "max-w-xl text-lg leading-8 text-muted",
-                                            children: "The prices below come directly from Aurelia’s canonical treatment catalogue. They illustrate how transparent pricing could be presented for this fictional clinic."
-                                        }),
-                                        /*#__PURE__*/ _jsx("p", {
-                                            className: "mt-4 max-w-xl text-sm leading-6 text-muted",
-                                            children: "Some treatments require a consultation first. Final costs may depend on clinical assessment and complex treatment plans may vary."
-                                        })
-                                    ]
-                                })
-                            ]
-                        })
-                    }),
-                    departmentPages.map((department, index)=>{
-                        const priced = (treatmentsByDepartment[department.slug] ?? []).filter((item)=>item.price);
-                        return /*#__PURE__*/ _jsx(Section, {
-                            className: index % 2 ? "bg-surface" : "",
-                            children: /*#__PURE__*/ _jsxs(Container, {
-                                className: "grid gap-10 lg:grid-cols-[.6fr_1.4fr]",
-                                children: [
-                                    /*#__PURE__*/ _jsxs("div", {
-                                        children: [
-                                            /*#__PURE__*/ _jsxs("p", {
-                                                className: "text-xs font-semibold uppercase tracking-[.16em] text-accent",
-                                                children: [
-                                                    "0",
-                                                    index + 1
-                                                ]
-                                            }),
-                                            /*#__PURE__*/ _jsx("h2", {
-                                                className: "mt-4 font-display text-4xl",
-                                                children: department.name
-                                            }),
-                                            /*#__PURE__*/ _jsx(Link, {
-                                                href: `/services/${department.slug}`,
-                                                className: "mt-5 inline-block text-sm text-accent hover:underline",
-                                                children: "View department →"
-                                            })
-                                        ]
-                                    }),
-                                    /*#__PURE__*/ _jsx("div", {
-                                        className: "divide-y divide-border border-y border-border",
-                                        children: priced.length ? priced.map((treatment)=>/*#__PURE__*/ _jsxs(Link, {
-                                                href: `/treatments/${treatment.slug}`,
-                                                className: "grid gap-2 py-5 sm:grid-cols-[1fr_auto]",
-                                                children: [
-                                                    /*#__PURE__*/ _jsx("span", {
-                                                        className: "text-sm font-medium",
-                                                        children: treatment.name
-                                                    }),
-                                                    /*#__PURE__*/ _jsx("span", {
-                                                        className: "text-sm text-accent",
-                                                        children: treatment.price
-                                                    })
-                                                ]
-                                            }, treatment.slug)) : /*#__PURE__*/ _jsx("p", {
-                                            className: "py-5 text-sm text-muted",
-                                            children: "Pricing is confirmed after an appropriate consultation."
-                                        })
-                                    })
-                                ]
-                            })
-                        }, department.slug);
-                    }),
-                    /*#__PURE__*/ _jsx("section", {
-                        className: "bg-accent py-20 text-white",
-                        children: /*#__PURE__*/ _jsxs(Container, {
-                            className: "flex flex-col justify-between gap-8 md:flex-row md:items-end",
-                            children: [
-                                /*#__PURE__*/ _jsxs("div", {
-                                    children: [
-                                        /*#__PURE__*/ _jsx("p", {
-                                            className: "eyebrow text-white/70",
-                                            children: "Ready to take the next step?"
-                                        }),
-                                        /*#__PURE__*/ _jsx("h2", {
-                                            className: "mt-4 font-display text-5xl",
-                                            children: "Request an appointment."
-                                        })
-                                    ]
-                                }),
-                                /*#__PURE__*/ _jsx(Button, {
-                                    href: "/book",
-                                    children: "Book an Appointment"
-                                })
-                            ]
-                        })
-                    })
-                ]
-            }),
-            /*#__PURE__*/ _jsx(SiteFooter, {})
-        ]
-    });
+import '@/lib/env/load-script-env';
+import { eq } from 'drizzle-orm';
+import { closeDatabaseConnection, getDatabase } from './client';
+import { departmentPages } from '@/lib/department-data';
+import { treatmentsByDepartment } from '@/lib/treatment-data';
+import { practitioners as publicPractitioners } from '@/lib/practitioner-data';
+import { departments, patientProfiles, practitionerDepartments, practitioners, practitionerScheduleRules, practitionerTreatments, staffProfiles, treatments, users } from './schema';
+
+async function seed() {
+  const db=getDatabase();
+  await db.transaction(async tx=>{
+    const departmentIds=new Map<string,string>(),treatmentIds=new Map<string,string>();
+    for(const item of departmentPages){const[row]=await tx.insert(departments).values({slug:item.slug,name:item.name,description:item.shortDescription}).onConflictDoUpdate({target:departments.slug,set:{name:item.name,description:item.shortDescription,active:true,updatedAt:new Date()}}).returning({id:departments.id});departmentIds.set(item.slug,row.id);
+      for(const treatment of treatmentsByDepartment[item.slug]??[]){const[t]=await tx.insert(treatments).values({slug:treatment.slug,departmentId:row.id,name:treatment.name,category:treatment.category,shortDescription:treatment.shortDescription,defaultDurationMinutes:30,indicativePricePence:price(treatment.price)}).onConflictDoUpdate({target:treatments.slug,set:{name:treatment.name,category:treatment.category,shortDescription:treatment.shortDescription,active:true,updatedAt:new Date()}}).returning({id:treatments.id});treatmentIds.set(treatment.slug,t.id)}
+    }
+    const accounts=[['patient@aurelia.example','PATIENT','Demo','Patient'],['reception@staff.aurelia.example','ADMIN','Aurelia','Reception'],['clinician@staff.aurelia.example','CLINICIAN','Elena','Ward'],['oversight@staff.aurelia.example','SUPER_ADMIN','Aurelia','Oversight']] as const;
+    for(const[email,role,first,last]of accounts){const[u]=await tx.insert(users).values({email,role,status:'ACTIVE'}).onConflictDoUpdate({target:users.email,set:{role,status:'ACTIVE',updatedAt:new Date()}}).returning({id:users.id});if(role==='PATIENT'){await tx.insert(patientProfiles).values({patientNumber:'AUR-DEMO-001',userId:u.id,firstName:first,lastName:last,dateOfBirth:'1990-01-01',email}).onConflictDoNothing()}else{await tx.insert(staffProfiles).values({userId:u.id,firstName:first,lastName:last,type:role}).onConflictDoUpdate({target:staffProfiles.userId,set:{firstName:first,lastName:last,type:role,active:true,updatedAt:new Date()}})}}
+    for(const person of publicPractitioners){const email=`${person.slug}@staff.aurelia.example`;const[u]=await tx.insert(users).values({email,role:'CLINICIAN',status:'ACTIVE'}).onConflictDoUpdate({target:users.email,set:{role:'CLINICIAN',status:'ACTIVE',updatedAt:new Date()}}).returning({id:users.id});const[s]=await tx.insert(staffProfiles).values({userId:u.id,firstName:person.name.split(' ').slice(0,-1).join(' '),lastName:person.name.split(' ').slice(-1)[0],type:'CLINICIAN'}).onConflictDoUpdate({target:staffProfiles.userId,set:{active:true,updatedAt:new Date()}}).returning({id:staffProfiles.id});const[p]=await tx.insert(practitioners).values({staffProfileId:s.id,publicSlug:person.slug,type:kind(person.practitionerType),defaultAppointmentDurationMinutes:30}).onConflictDoUpdate({target:practitioners.publicSlug,set:{active:true,updatedAt:new Date()}}).returning({id:practitioners.id});for(const slug of person.departmentSlugs){const id=departmentIds.get(slug);if(id)await tx.insert(practitionerDepartments).values({practitionerId:p.id,departmentId:id,primary:slug===person.departmentSlugs[0]}).onConflictDoNothing()}for(const slug of person.treatmentSlugs){const id=treatmentIds.get(slug);if(id)await tx.insert(practitionerTreatments).values({practitionerId:p.id,treatmentId:id}).onConflictDoNothing()}for(const day of person.workingDays)await tx.insert(practitionerScheduleRules).values({practitionerId:p.id,day:day.toUpperCase() as typeof practitionerScheduleRules.day.enumValues[number],startTime:'09:00',endTime:'17:00',appointmentDurationMinutes:30}).onConflictDoNothing()}
+  });
 }
+const kind=(value:string)=>value==='dentist'?'DENTIST':value==='dental-hygienist'?'DENTAL_HYGIENIST':value==='physiotherapist'?'PHYSIOTHERAPIST':'DOCTOR';
+function price(value:string){const match=value.match(/£(\d+)/);return match?Number(match[1])*100:null}
+seed().then(()=>console.log('Aurelia seed completed.')).catch(error=>{console.error('Aurelia seed failed.',error instanceof Error?error.message:error);process.exitCode=1}).finally(closeDatabaseConnection);

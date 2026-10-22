@@ -1,14 +1,10 @@
-// @ts-nocheck
-/* __next_internal_action_entry_do_not_use__ {"e701fd9ff6bfb8f7c1b598372d42cc9c73fe8aa1":"logoutAction"} */ import { registerServerReference } from "private-next-rsc-server-reference";
-import { encryptActionBoundArgs, decryptActionBoundArgs } from "private-next-rsc-action-encryption";
-import { redirect } from "next/navigation";
-import { revokeCurrentSession } from "@/lib/auth/session";
-export async function logoutAction() {
-    await revokeCurrentSession();
-    redirect("/login");
-}
-import { ensureServerEntryExports } from "private-next-rsc-action-validate";
-ensureServerEntryExports([
-    logoutAction
-]);
-registerServerReference("e701fd9ff6bfb8f7c1b598372d42cc9c73fe8aa1", logoutAction);
+import{eq}from'drizzle-orm';import type{AuthenticatedUser}from'@/lib/auth/types';import{assertManagement}from'./access';import{getDatabase}from'@/lib/db/client';import{auditLogs,practitionerDepartments,practitionerScheduleExceptions,practitionerScheduleRules,practitioners,practitionerTreatments,staffProfiles,users}from'@/lib/db/schema';
+const audit=(a:AuthenticatedUser,action:string,type:string,id?:string,metadata:Record<string,unknown>={})=>getDatabase().insert(auditLogs).values({actorUserId:a.userId,actorRoleSnapshot:a.role,action,resourceType:type,resourceId:id,metadata});
+export async function createStaff(a:AuthenticatedUser,v:Record<string,string>){assertManagement(a);return getDatabase().transaction(async tx=>{const role=v.role as'ADMIN'|'CLINICIAN'|'SUPER_ADMIN';const[u]=await tx.insert(users).values({email:v.email.trim().toLowerCase(),role,status:'INVITED'}).returning();const[s]=await tx.insert(staffProfiles).values({userId:u.id,firstName:v.firstName,lastName:v.lastName,type:role}).returning();if(role==='CLINICIAN')await tx.insert(practitioners).values({staffProfileId:s.id,publicSlug:v.publicSlug||`${v.firstName}-${v.lastName}`.toLowerCase().replace(/[^a-z0-9]+/g,'-'),type:(v.practitionerType||'DOCTOR')as typeof practitioners.type.enumValues[number]});return u})}
+export async function setStaffActive(a:AuthenticatedUser,userId:string,active:boolean){assertManagement(a);await getDatabase().update(staffProfiles).set({active,updatedAt:new Date()}).where(eq(staffProfiles.userId,userId));await audit(a,'STAFF_ACTIVE_CHANGED','STAFF',userId,{active})}
+export async function transitionStaffRole(a:AuthenticatedUser,userId:string,role:'ADMIN'|'CLINICIAN'|'SUPER_ADMIN'){assertManagement(a);await getDatabase().transaction(async tx=>{await tx.update(users).set({role,updatedAt:new Date()}).where(eq(users.id,userId));await tx.update(staffProfiles).set({type:role,updatedAt:new Date()}).where(eq(staffProfiles.userId,userId))});await audit(a,'STAFF_ROLE_CHANGED','STAFF',userId,{role})}
+export async function setPractitionerActive(a:AuthenticatedUser,id:string,active:boolean){assertManagement(a);await getDatabase().update(practitioners).set({active,updatedAt:new Date()}).where(eq(practitioners.id,id));await audit(a,'PRACTITIONER_ACTIVE_CHANGED','PRACTITIONER',id,{active})}
+export async function addPractitionerDepartment(a:AuthenticatedUser,id:string,departmentId:string,primary:boolean){assertManagement(a);await getDatabase().insert(practitionerDepartments).values({practitionerId:id,departmentId,primary}).onConflictDoUpdate({target:[practitionerDepartments.practitionerId,practitionerDepartments.departmentId],set:{primary}})}
+export async function addPractitionerTreatment(a:AuthenticatedUser,id:string,treatmentId:string){assertManagement(a);await getDatabase().insert(practitionerTreatments).values({practitionerId:id,treatmentId}).onConflictDoNothing()}
+export async function addScheduleRule(a:AuthenticatedUser,id:string,v:Record<string,string>){assertManagement(a);await getDatabase().insert(practitionerScheduleRules).values({practitionerId:id,day:v.day as typeof practitionerScheduleRules.day.enumValues[number],startTime:v.startTime,endTime:v.endTime,appointmentDurationMinutes:Number(v.durationMinutes||30),effectiveFrom:v.effectiveFrom||null,effectiveTo:v.effectiveTo||null})}
+export async function addScheduleException(a:AuthenticatedUser,id:string,v:Record<string,string>){assertManagement(a);await getDatabase().insert(practitionerScheduleExceptions).values({practitionerId:id,type:(v.type||'MANUAL_BLOCK')as typeof practitionerScheduleExceptions.type.enumValues[number],startsAt:new Date(v.startsAt),endsAt:new Date(v.endsAt),reason:v.reason||null,createdByUserId:a.userId})}

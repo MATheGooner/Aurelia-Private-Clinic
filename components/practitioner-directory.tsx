@@ -1,5 +1,1 @@
-// @ts-nocheck
-import { createProxy } from "next/dist/build/webpack/loaders/next-flight-loader/module-proxy"
-
-const e0 = createProxy(String.raw`C:\Users\MSI PRESTIGE 15\Documents\VS Code\Software Development\Aurelia Private Clinic\components\practitioner-directory.tsx#PractitionerDirectory`);
-export { e0 as PractitionerDirectory };
+'use client';import{useMemo,useState}from'react';import Link from'next/link';import{EditorialImage}from'./editorial-image';import type{Practitioner}from'@/lib/practitioner-data';export function PractitionerDirectory({practitioners}:{practitioners:Practitioner[]}){const[q,setQ]=useState(''),rows=useMemo(()=>practitioners.filter(x=>(x.name+x.role+x.department).toLowerCase().includes(q.toLowerCase())),[q,practitioners]);return <div><label className="block max-w-md font-medium">Search practitioners<input className="auth-field mt-2" value={q} onChange={e=>setQ(e.target.value)}/></label><div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">{rows.map(x=><Link href={`/practitioners/${x.slug}`} key={x.slug}><div className="relative aspect-[4/5] overflow-hidden"><EditorialImage src={x.image} alt={x.name} fill className="object-cover"/></div><h2 className="mt-4 font-display text-3xl">{x.name}</h2><p className="text-muted">{x.role} · {x.department}</p></Link>)}</div></div>}
