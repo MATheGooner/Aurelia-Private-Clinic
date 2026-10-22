@@ -13,7 +13,7 @@ export const departments: Department[] = [
   { slug: 'dentistry', name: 'Dentistry', description: 'Preventive, restorative and cosmetic dentistry delivered with a gentle, considered approach.', image: image('photo-1606811971618-4486d14f3f99') },
   { slug: 'dermatology', name: 'Dermatology', description: 'Expert assessment and treatment for skin health, confidence and comfort.', image: image('photo-1616394584738-fc6e612e71b9') },
   { slug: 'physiotherapy', name: 'Physiotherapy', description: 'Personalised support to help you move with more confidence and less discomfort.', image: image('photo-1576091160399-112ba8d25d1d') },
-  { slug: 'womens-health', name: "Women's Health", description: 'Private, respectful care across the changing stages of womenâ€™s health.', image: image('photo-1559839734-2b71ea197ec2') },
+  { slug: 'womens-health', name: "Women's Health", description: 'Private, respectful care across the changing stages of women’s health.', image: image('photo-1559839734-2b71ea197ec2') },
   { slug: 'health-screening', name: 'Health Screening & Diagnostics', description: 'A clearer picture of your health, with time to understand what comes next.', image: image('photo-1576091160550-2173dba999ef') },
 ];
 
@@ -43,10 +43,10 @@ export const testimonials: Testimonial[] = [
 ];
 
 export const fees: Fee[] = [
-  { label: 'Private GP consultation', price: 'from Â£95' },
-  { label: 'Dental examination', price: 'from Â£65' },
-  { label: 'Hygiene appointment', price: 'from Â£75' },
-  { label: 'Teeth whitening', price: 'from Â£350' },
-  { label: 'Dermatology consultation', price: 'from Â£180' },
+  { label: 'Private GP consultation', price: 'from £95' },
+  { label: 'Dental examination', price: 'from £65' },
+  { label: 'Hygiene appointment', price: 'from £75' },
+  { label: 'Teeth whitening', price: 'from £350' },
+  { label: 'Dermatology consultation', price: 'from £180' },
 ];
 

@@ -14,3 +14,7 @@
  .care-option{@apply min-h-12 border border-border bg-canvas px-5 py-3 text-left font-medium transition-colors hover:border-accent}
  .care-option-active{@apply border-accent bg-accent-soft text-accent}
 }
+@layer utilities{
+ .text-sm{font-size:1rem;line-height:1.6}
+ .text-xs{font-size:.875rem;line-height:1.5}
+}
