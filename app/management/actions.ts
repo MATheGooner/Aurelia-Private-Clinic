@@ -1,0 +1,7 @@
+'use server';
+import{revalidatePath}from'next/cache';import{requireManagement}from'@/lib/auth/guards';import{addPractitionerDepartment,addPractitionerTreatment,addScheduleException,addScheduleRule,createStaff,setPractitionerActive,setStaffActive,transitionStaffRole}from'@/lib/management/mutations';
+const vals=(f:FormData)=>Object.fromEntries(Array.from(f.entries()).filter((x):x is[string,string]=>typeof x[1]==='string'));
+export async function createStaffAction(f:FormData){await createStaff(await requireManagement(),vals(f));revalidatePath('/management/staff')}
+export async function staffActiveAction(f:FormData){await setStaffActive(await requireManagement(),String(f.get('userId')),f.get('active')==='true');revalidatePath('/management/staff')}
+export async function roleAction(f:FormData){await transitionStaffRole(await requireManagement(),String(f.get('userId')),String(f.get('role'))as'ADMIN'|'CLINICIAN'|'SUPER_ADMIN');revalidatePath('/management/staff')}
+export async function practitionerAction(f:FormData){const a=await requireManagement(),v=vals(f);if(v.operation==='active')await setPractitionerActive(a,v.practitionerId,v.active==='true');if(v.operation==='department')await addPractitionerDepartment(a,v.practitionerId,v.departmentId,v.primary==='on');if(v.operation==='treatment')await addPractitionerTreatment(a,v.practitionerId,v.treatmentId);if(v.operation==='rule')await addScheduleRule(a,v.practitionerId,v);if(v.operation==='exception')await addScheduleException(a,v.practitionerId,v);revalidatePath('/management/practitioners')}

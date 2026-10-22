@@ -1,0 +1,44 @@
+{
+  "name": "aurelia-private-clinic",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test:security": "tsx tests/security/permissions.test.ts && tsx tests/security/password-and-session.test.ts",
+    "test:booking": "tsx tests/appointments/availability.test.ts && tsx tests/appointments/booking.test.ts",
+    "test:admin": "tsx tests/admin/operations.test.ts",
+    "test:clinical": "tsx tests/clinical/access.test.ts",
+    "test:portal": "tsx tests/portal/access.test.ts",
+    "test:management": "tsx tests/management/access.test.ts",
+    "test:integration": "node --import tsx tests/integration/core-workflow.test.ts",
+    "auth:set-password": "node --import tsx scripts/set-password.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx lib/db/migrate.ts",
+    "db:seed": "tsx lib/db/seed.ts",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.4",
+    "next": "14.2.15",
+    "pg": "^8.23.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.16.10",
+    "@types/pg": "^8.23.1",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.20",
+    "drizzle-kit": "^0.31.11",
+    "postcss": "8.4.47",
+    "tailwindcss": "3.4.14",
+    "tsx": "^4.23.15",
+    "typescript": "5.6.3"
+  }
+}

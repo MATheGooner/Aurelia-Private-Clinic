@@ -1,0 +1,1 @@
+import type{AuthenticatedUser,UserRole}from'@/lib/auth/types';import{AuthorizationError}from'@/lib/auth/permissions';export const canAccessManagement=(r:UserRole)=>r==='SUPER_ADMIN';export function assertManagement(a:AuthenticatedUser){if(!canAccessManagement(a.role))throw new AuthorizationError()}

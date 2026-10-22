@@ -1,0 +1,2 @@
+import '../../lib/env/load-script-env';
+export function integrationDatabaseUrl():string|null{if(process.env.AURELIA_RUN_INTEGRATION!=='1')return null;const raw=process.env.AURELIA_INTEGRATION_DATABASE_URL;if(!raw)throw new Error('AURELIA_INTEGRATION_DATABASE_URL is required.');const url=new URL(raw),identity=`${url.hostname}${url.pathname}`.toLowerCase();if(!/(test|dev)/.test(identity))throw new Error('Refusing integration tests: database is not explicitly named test/dev.');process.env.DATABASE_URL=raw;return raw}
