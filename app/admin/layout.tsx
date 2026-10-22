@@ -1,2 +1,10 @@
-import Link from 'next/link'; import { requireAdminWorkspace } from '@/lib/auth/guards'; import { logoutAction } from '@/app/account/actions';
-export default async function AdminLayout({ children }: { children: React.ReactNode }) { await requireAdminWorkspace(); return <div className="min-h-screen bg-canvas"><header className="border-b border-border bg-surface"><div className="mx-auto flex max-w-site items-center justify-between px-4 py-5"><Link href="/admin" className="font-display text-2xl">Aurelia Operations</Link><form action={logoutAction}><button>Sign out</button></form></div><nav className="mx-auto flex max-w-site gap-6 overflow-x-auto px-4 pb-4"><Link href="/admin">Overview</Link><Link href="/admin/appointments">Appointments</Link><Link href="/admin/patients">Patients</Link><Link href="/admin/schedule">Schedule</Link></nav></header><main className="mx-auto max-w-site px-4 py-10">{children}</main></div>; }
+import Image from 'next/image';
+import Link from 'next/link';
+import { requireAdminWorkspace } from '@/lib/auth/guards';
+import { logoutAction } from '@/app/account/actions';
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await requireAdminWorkspace();
+  return <div className="min-h-screen bg-canvas"><header className="border-b border-border bg-surface"><div className="mx-auto flex max-w-site items-center justify-between px-4 py-5"><Link href="/admin" className="flex items-center gap-3 font-display text-2xl"><Image src="/brand/aurelia-icon.png" alt="Aurelia Private Clinic" width={40} height={40} className="h-10 w-10" />Aurelia Operations</Link><form action={logoutAction}><button>Sign out</button></form></div><nav className="mx-auto flex max-w-site gap-6 overflow-x-auto px-4 pb-4"><Link href="/admin">Overview</Link><Link href="/admin/appointments">Appointments</Link><Link href="/admin/patients">Patients</Link><Link href="/admin/schedule">Schedule</Link></nav></header><main className="mx-auto max-w-site px-4 py-10">{children}</main></div>;
+}
+

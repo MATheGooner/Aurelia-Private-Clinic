@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { Button } from './button';
 
@@ -9,8 +10,8 @@ export function SiteHeader() {
   return <header className="sticky top-0 z-40 border-b border-border/80 bg-canvas/95 backdrop-blur-sm">
     <div className="mx-auto flex max-w-site items-center justify-between px-5 py-4 sm:px-8 lg:px-12">
       <Link href="/" className="group flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent" aria-label="Aurelia Private Clinic home">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-accent text-sm text-accent">A</span>
-        <span className="font-display text-xl tracking-tight">Aurelia <span className="hidden sm:inline">Private Clinic</span></span>
+        <Image src="/brand/aurelia-icon.png" alt="Aurelia Private Clinic" width={40} height={40} className="h-10 w-10 sm:hidden" />
+        <Image src="/brand/aurelia-logo.png" alt="Aurelia Private Clinic" width={2172} height={724} className="hidden h-auto w-44 sm:block" priority />
       </Link>
       <button className="rounded-sm p-2 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:hidden" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="mobile-navigation"><span className="sr-only">Toggle navigation</span><span aria-hidden="true">{open ? '×' : '☰'}</span></button>
       <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary navigation">

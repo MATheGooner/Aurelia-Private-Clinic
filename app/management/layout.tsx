@@ -1,1 +1,10 @@
-import Link from'next/link';import{requireManagement}from'@/lib/auth/guards';import{logoutAction}from'@/app/account/actions';export default async function Layout({children}:{children:React.ReactNode}){const a=await requireManagement();return <div className="min-h-screen bg-canvas lg:grid lg:grid-cols-[17rem_1fr]"><aside className="bg-[#172c35] p-5 text-white"><Link href="/management" className="font-display text-2xl">Aurelia Management</Link><nav className="mt-8 flex gap-4 overflow-auto lg:flex-col"><Link href="/management">Overview</Link><Link href="/management/staff">Staff</Link><Link href="/management/practitioners">Practitioners</Link><Link href="/management/patients">Patients</Link><Link href="/management/audit">Audit</Link></nav></aside><div><header className="flex justify-between border-b bg-surface px-6 py-4"><span>{a.email} · SUPER ADMIN</span><form action={logoutAction}><button>Sign out</button></form></header><main className="p-5 sm:p-8">{children}</main></div></div>}
+import Image from 'next/image';
+import Link from 'next/link';
+import { requireManagement } from '@/lib/auth/guards';
+import { logoutAction } from '@/app/account/actions';
+
+export default async function Layout({ children }: { children: React.ReactNode }) {
+  const account = await requireManagement();
+  return <div className="min-h-screen bg-canvas lg:grid lg:grid-cols-[17rem_1fr]"><aside className="bg-[#172c35] p-5 text-white"><Link href="/management" className="flex items-center gap-3 font-display text-2xl"><Image src="/brand/aurelia-icon.png" alt="Aurelia Private Clinic" width={40} height={40} className="h-10 w-10" />Aurelia Management</Link><nav className="mt-8 flex gap-4 overflow-auto lg:flex-col"><Link href="/management">Overview</Link><Link href="/management/staff">Staff</Link><Link href="/management/practitioners">Practitioners</Link><Link href="/management/patients">Patients</Link><Link href="/management/audit">Audit</Link></nav></aside><div><header className="flex justify-between border-b bg-surface px-6 py-4"><span>{account.email} · SUPER ADMIN</span><form action={logoutAction}><button>Sign out</button></form></header><main className="p-5 sm:p-8">{children}</main></div></div>;
+}
+
