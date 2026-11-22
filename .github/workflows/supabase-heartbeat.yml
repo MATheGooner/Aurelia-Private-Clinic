@@ -1,0 +1,40 @@
+name: Supabase database heartbeat
+
+on:
+  schedule:
+    # 06:17, 13:17, and 20:17 UTC every day.
+    - cron: '17 6,13,20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aurelia-supabase-heartbeat
+  cancel-in-progress: false
+
+jobs:
+  heartbeat:
+    name: Aurelia read-only heartbeat
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install locked production dependencies
+        run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+
+      - name: Query Aurelia database
+        run: node scripts/db-heartbeat.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AURELIA_DATABASE_CA_CERT: ${{ secrets.AURELIA_DATABASE_CA_CERT }}

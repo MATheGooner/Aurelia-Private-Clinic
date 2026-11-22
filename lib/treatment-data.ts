@@ -36,7 +36,7 @@ const definitions: Array<[string, string, string, string, string]> = [
   ['fillings','Dental Fillings','dentistry','Restorative dentistry','from £145'],
   ['crowns','Dental Crowns','dentistry','Restorative dentistry','from £695'],
   ['root-canal-treatment','Root Canal Treatment','dentistry','Restorative dentistry','from £650'],
-  ['dental-implants','Dental Implants','dentistry','Implant dentistry','consultation from £120'],
+  ['dental-implants','Dental Implants','dentistry','Implant dentistry','from £120'],
   ['clear-aligner-consultation','Clear Aligner Consultation','dentistry','Cosmetic dentistry','from £95'],
   ['teeth-whitening','Teeth Whitening','dentistry','Cosmetic dentistry','from £350'],
   ['veneers','Dental Veneers','dentistry','Cosmetic dentistry','from £750'],
